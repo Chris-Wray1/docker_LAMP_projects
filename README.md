@@ -10,11 +10,11 @@ DBrootPWD = 'Password1'
 DBuser = 'dbuser'
 DBuserPWD = 'Password2'
 ```
-Each line of the section needs to be included, and the does the following ->
+Each line of the section needs to be included, and they do the following ->
 ```
-[container name]  --> This will become the main reference used for container, volumes, images an dbuilds within Docker
+[container name]  --> The main reference used for the container, volumes, images and builds within Docker
 webport           --> This is the port number exposed to localhost for Apache
-sqlport           --> Similarly, this is the post eposed to localhost for MySQL
+sqlport           --> Similarly, this is the port eposed to localhost for MySQL
 DBrootPWD         --> This is the MySQL password for the root user
 DBuser            --> This is the default user for the MySQL databasse
 DBuserPWD         --> This is the passwrod for the default user to login to MySQL
