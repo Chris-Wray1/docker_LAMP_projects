@@ -25,3 +25,7 @@ The config file can contain multiple sections and each section will create a con
 Each container will have an instance of Apache with PHP running on a Debian server, with a MySQL DB
 
 To use this setup, clone the repo, ensure that the setup.sh file is executable, edit the container.config file and run setup.sh from a command line.
+
+## Planned Future Development
+  - Add option for NGINX or APACHE
+  - Add a selection of DataBases
