@@ -1,0 +1,22 @@
+<VirtualHost *:80>
+
+	ServerName xxxx.localhost
+
+	ServerAdmin admin@xxxx.localhost
+	DocumentRoot /var/www/html/public
+
+	DirectoryIndex index.php index.cgi index.pl index.shtml index.jsp default.asp index.aspx index.html index.htm
+
+	<Directory /var/www/html/public>
+		Options -Indexes +FollowSymLinks
+		AllowOverride All
+		Require all granted
+		RewriteEngine On
+		Order allow,deny
+		Allow from all
+	</Directory>
+
+	ErrorLog /var/www/html/logs/error.log
+	CustomLog /var/www/html/logs/access.log combined
+</VirtualHost>
+

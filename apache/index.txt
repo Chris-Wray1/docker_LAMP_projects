@@ -1,0 +1,9 @@
+<html>
+<head>
+	<title>xxxx</title>
+</head>
+<body>
+	<h1>xxxx</h1>
+	<div><?php phpinfo(); ?></div>
+</body>
+</html>

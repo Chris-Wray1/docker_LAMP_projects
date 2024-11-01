@@ -1,0 +1,32 @@
+FROM php:8-apache
+
+RUN apt-get update
+
+RUN apt update -y && \
+apt install -y --reinstall libfreetype6-dev libjpeg62-turbo-dev libpng-dev libzip-dev libonig-dev libxml2-dev libcurl4-openssl-dev \
+openssl zip unzip git apache2-utils curl gawk vim
+
+RUN pecl install xdebug && \
+a2enmod rewrite && \
+a2enmod headers
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg 
+RUN docker-php-ext-install opcache gd pdo_mysql zip mysqli mbstring xml zip curl intl
+RUN docker-php-ext-enable opcache gd xdebug zip mysqli mbstring xml zip curl intl
+
+COPY xxxx.conf /etc/apache2/sites-available/xxxx.conf
+
+RUN a2ensite xxxx && \
+a2dissite 000-default
+
+RUN mkdir -p /var/www/html/public && \
+mkdir -p /var/www/html/logs
+
+RUN echo ""  >> /etc/apache2/apache2.conf && \
+echo "  ##  Added by DocekrFfile ##" >> /etc/apache2/apache2.conf && \
+echo "ServerName xxxx.localhost" >> /etc/apache2/apache2.conf
+
+RUN service apache2 restart
+
+EXPOSE 80
+EXPOSE 443
