@@ -71,3 +71,5 @@ Icon=/opt/docker-desktop/share/icon.original.png
 Type=Application
 Keywords=container;docker;
 Categories=Development;" > /usr/share/applications/docker-desktop.desktop
+sudo chown root:root /usr/share/applications/*.desktop
+sudo chmod 0644 /usr/share/applications/*.desktop
