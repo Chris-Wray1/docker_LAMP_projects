@@ -89,6 +89,7 @@ done < "$filename"
 
 echo "[+] Building your Container(s)"
 echo "	[+] Each container will have its own subfolder"
+echo "	[+] And DB instance"
 echo ""
 
 
@@ -123,7 +124,7 @@ for f in *-compose.yml; do
 	mkdir -p $volume/public
 	## Uncomment if you need to keep the DB after rebuilds
 	## BUT you will need to use the alternative dockercompose file in the apache folder
-#	mkdir -p $volume/db
+	mkdir -p $volume/db
 
 	## Create the default index file
 	if [ ! -f ./$volume/public/index.php ];

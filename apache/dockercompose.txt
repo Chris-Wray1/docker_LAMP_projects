@@ -10,18 +10,31 @@ services:
     hostname: {volume}.localhost
     volumes: 
       - {volume}:/var/www/html
+      - {volume}_db:/var/run/mysqld
+      - {volume}_db:/var/lib/mysql
     ports:
       - "{webport}:80"
+    depends_on:
+      - mysql
+    networks:
+      - {volume}_network
   mysql:
     container_name: {volume}_db
-    image: mysql:latest
+    image: mysql:8.1.0
     ports:
-    - "{sqlport}:3306"
+      - "{sqlport}:3306"
     environment:
-    - MYSQL_ROOT_PASSWORD={DBrootPWD}
-    - MYSQL_USER={DBuser}
-    - MYSQL_PASSWORD={DBuserPWD}
-    - MYSQL_DATABASE={volume}
+      - MYSQL_ROOT_PASSWORD={DBrootPWD}
+      - MYSQL_USER={DBuser}
+      - MYSQL_PASSWORD={DBuserPWD}
+      - MYSQL_DATABASE={volume}
+    volumes: 
+      - {volume}_db:/var/run/mysqld
+      - {volume}_db:/var/lib/mysql
+    networks:
+      {volume}_network:
+        aliases:
+          - database
 volumes:
   {volume}:
     name: "{volume}"
@@ -34,3 +47,16 @@ volumes:
     labels:
       description: "Apache Volume"
       department: "IT/Ops"
+  {volume}_db:
+    name: "{volume}_db"
+    driver: local
+    driver_opts: 
+      type: none
+      device: ./{volume}/db/
+      o: bind
+    external: false
+    labels:
+      description: "Mysql Volume"
+      department: "IT/Ops"
+networks:
+   {volume}_network:

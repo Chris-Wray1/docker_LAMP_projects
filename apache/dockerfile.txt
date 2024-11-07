@@ -1,23 +1,46 @@
 FROM php:8-apache
 
-RUN apt-get update
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt update -y && \
-apt install -y --reinstall libfreetype6-dev libjpeg62-turbo-dev libpng-dev libzip-dev libonig-dev libxml2-dev libcurl4-openssl-dev \
-openssl zip unzip git apache2-utils curl gawk vim
+RUN echo 'path-exclude /usr/share/doc/*' >/etc/dpkg/dpkg.cfg.d/docker-minimal && \ 
+echo 'path-exclude /usr/share/man/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
+echo 'path-exclude /usr/share/groff/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
+echo 'path-exclude /usr/share/info/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
+echo 'path-exclude /usr/share/lintian/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
+echo 'path-exclude /usr/share/linda/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
+echo 'path-exclude /usr/share/locale/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
+echo 'path-include /usr/share/locale/en*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal
 
-RUN pecl install xdebug && \
-a2enmod rewrite && \
-a2enmod headers
+RUN apt update -y > /dev/null 2>&1 && \
+apt install -qq -y --reinstall libfreetype6-dev libjpeg62-turbo-dev libpng-dev libzip-dev libonig-dev libxml2-dev libcurl4-openssl-dev \
+openssl zip unzip git apache2-utils curl gawk vim wget locales apt-utils > /dev/null 2>&1
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg 
-RUN docker-php-ext-install opcache gd pdo_mysql zip mysqli mbstring xml zip curl intl
-RUN docker-php-ext-enable opcache gd xdebug zip mysqli mbstring xml zip curl intl
+RUN mkdir -p /root/Downloads
+RUN wget -c -O /root/Downloads/mysql-apt.deb https://dev.mysql.com/get/mysql-apt-config_0.8.33-1_all.deb
+
+RUN DEBIAN_FRONTEND=noninteractive apt install -qq -y --reinstall /root/Downloads/mysql-apt.deb > /dev/null 2>&1 && \
+apt update -y > /dev/null 2>&1
+
+RUN apt install -qq -y --reinstall mysql-client > /dev/null 2>&1
+
+RUN mkdir -p /etc/mysql
+RUN echo "[client]" >> /etc/mysql/my.cnf.fallback
+RUN echo "socket=/var/www/html/db/mysqld.sock" >> /etc/mysql/my.cnf.fallback
+RUN echo "[mysqld]" >> /etc/mysql/my.cnf.fallback
+RUN echo "bind-address=0.0.0.0" >> /etc/mysql/my.cnf.fallback
+
+RUN pecl install xdebug > /dev/null && \
+a2enmod rewrite > /dev/null && \
+a2enmod headers > /dev/null
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null
+RUN docker-php-ext-install opcache gd pdo_mysql zip mysqli intl > /dev/null
+RUN docker-php-ext-enable opcache xdebug > /dev/null
 
 COPY xxxx.conf /etc/apache2/sites-available/xxxx.conf
 
-RUN a2ensite xxxx && \
-a2dissite 000-default
+RUN a2ensite xxxx > /dev/null && \
+a2dissite 000-default > /dev/null
 
 RUN mkdir -p /var/www/html/public && \
 mkdir -p /var/www/html/logs
