@@ -12,7 +12,7 @@ RUN mkdir -p /var/www/html/logs
 RUN apt -qq update -y
 
 # Install PHP
-RUN apt install -qq -y --reinstall php php-cli php-common php-dev php-mysql php-opcache php-zip php-gd php-mbstring php-curl php-xml
+RUN apt install -qq -y --reinstall php php-cli php-common php-dev php-mysql php-opcache php-zip php-gd php-mbstring php-curl php-xml php-intl
 
 # Install Apache
 RUN apt install -qq -y --reinstall apache2 apache2-utils libapache2-mod-php
@@ -25,34 +25,34 @@ RUN apt install -qq -y --reinstall mysql-client
 # Add Global ServerName to Apache
 RUN echo ""  >> /etc/apache2/apache2.conf && \
 echo "  ##  Added by DocekrFfile ##" >> /etc/apache2/apache2.conf && \
-echo "ServerName {volume}.localhost" >> /etc/apache2/apache2.conf
+echo "ServerName {project}.localhost" >> /etc/apache2/apache2.conf
 
 # Add Virtual Host
 RUN mkdir -p /etc/apache2/sites-available
-RUN echo "<VirtualHost *:80>" > /etc/apache2/sites-available/{volume}.conf && \
-echo "" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "  ServerName {volume}.localhost" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "  ServerAdmin admin@{volume}.localhost" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "  DocumentRoot /var/www/html/public" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "  DirectoryIndex index.php index.cgi index.pl index.shtml index.jsp default.asp index.aspx index.html index.htm" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "  <Directory /var/www/html/public>" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "    Options -Indexes +FollowSymLinks" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "    AllowOverride All" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "    Require all granted" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "    RewriteEngine On" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "    Order allow,deny" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "    Allow from all" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "  </Directory>" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "  ErrorLog /var/www/html/logs/error.log" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "  CustomLog /var/www/html/logs/access.log combined" >> /etc/apache2/sites-available/{volume}.conf && \
-echo "</VirtualHost>" >> /etc/apache2/sites-available/{volume}.conf
+RUN echo "<VirtualHost *:80>" > /etc/apache2/sites-available/{project}.conf && \
+echo "" >> /etc/apache2/sites-available/{project}.conf && \
+echo "  ServerName {project}.localhost" >> /etc/apache2/sites-available/{project}.conf && \
+echo "" >> /etc/apache2/sites-available/{project}.conf && \
+echo "  ServerAdmin admin@{project}.localhost" >> /etc/apache2/sites-available/{project}.conf && \
+echo "  DocumentRoot /var/www/html/public" >> /etc/apache2/sites-available/{project}.conf && \
+echo "" >> /etc/apache2/sites-available/{project}.conf && \
+echo "  DirectoryIndex index.php index.cgi index.pl index.shtml index.jsp default.asp index.aspx index.html index.htm" >> /etc/apache2/sites-available/{project}.conf && \
+echo "" >> /etc/apache2/sites-available/{project}.conf && \
+echo "  <Directory /var/www/html/public>" >> /etc/apache2/sites-available/{project}.conf && \
+echo "    Options -Indexes +FollowSymLinks" >> /etc/apache2/sites-available/{project}.conf && \
+echo "    AllowOverride All" >> /etc/apache2/sites-available/{project}.conf && \
+echo "    Require all granted" >> /etc/apache2/sites-available/{project}.conf && \
+echo "    RewriteEngine On" >> /etc/apache2/sites-available/{project}.conf && \
+echo "    Order allow,deny" >> /etc/apache2/sites-available/{project}.conf && \
+echo "    Allow from all" >> /etc/apache2/sites-available/{project}.conf && \
+echo "  </Directory>" >> /etc/apache2/sites-available/{project}.conf && \
+echo "" >> /etc/apache2/sites-available/{project}.conf && \
+echo "  ErrorLog /var/www/html/logs/error.log" >> /etc/apache2/sites-available/{project}.conf && \
+echo "  CustomLog /var/www/html/logs/access.log combined" >> /etc/apache2/sites-available/{project}.conf && \
+echo "</VirtualHost>" >> /etc/apache2/sites-available/{project}.conf
 
 # Disable Default Virtual Host and enable custom host
-RUN a2ensite {volume} > /dev/null && \
+RUN a2ensite {project} > /dev/null && \
 a2dissite 000-default > /dev/null
 
 # Enable rewrite and headers

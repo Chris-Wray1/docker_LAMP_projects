@@ -32,7 +32,7 @@ echo ""
 #														#
 #########################################################
 
-volume=""
+project=""
 section_regex="^[[:blank:]]*\[[[:blank:]]*([[:alpha:]_][[:alnum:]_-]*)[[:blank:]]*\][[:blank:]]*(#.*)?$"
 entry_regex_quotes="^[[:blank:]]*([[:alpha:]_][[:alnum:]_]*)[[:blank:]]*=[[:blank:]]*('[^']+'|\"[^\"]+\")[[:blank:]]*(#.*)*$"
 entry_regex_loose="^[[:blank:]]*([[:alpha:]_][[:alnum:]_]*)[[:blank:]]*=[[:blank:]]*([^#]*[^#[:blank:]])*"
@@ -47,16 +47,16 @@ do
 		continue;
 	fi
 
-	# Set the volume label from section name
+	# Set the project label from section name
 	[[ $line =~ $section_regex ]] && {
-		volume=${BASH_REMATCH[1]}
-		cp ./apache/dockercompose.txt ./${volume}-compose.yml
-		sed -i "s/{volume}/$volume/g" ./${volume}-compose.yml
+		project=${BASH_REMATCH[1]}
+		cp ./apache/dockercompose.txt ./${project}-compose.yml
+		sed -i "s/{project}/$project/g" ./${project}-compose.yml
 		continue
 	}
 
-	# Ignore the line if no volume label set
-	if [ -z "${volume}" ];
+	# Ignore the line if no project label set
+	if [ -z "${project}" ];
 	then
 		continue;
 	fi
@@ -70,7 +70,7 @@ do
 		value=${BASH_REMATCH[2]#[\'\"]} # strip quotes
 		value=${value%[\'\"]}
 		key=${BASH_REMATCH[1]}
-		sed -i "s/{${key}}/${value}/g" ./${volume}-compose.yml
+		sed -i "s/{${key}}/${value}/g" ./${project}-compose.yml
 		if [[ $key == "region" ]] then 
 			region=${value}
 		fi
@@ -84,7 +84,7 @@ do
 	then
 		value=${BASH_REMATCH[2]}
 		key=${BASH_REMATCH[1]}
-		sed -i "s/{${key}}/${value}/g" ./${volume}-compose.yml
+		sed -i "s/{${key}}/${value}/g" ./${project}-compose.yml
 		if [[ $key == "region" ]] then 
 			region=${value}
 		fi
@@ -102,8 +102,8 @@ done < "$filename"
 #########################################################
 
 echo "[+] Building your Container(s)"
-echo "	[+] Each container will have its own subfolder"
-echo "	[+] And DB instance"
+echo "	[+] Each project will have its own subfolder"
+echo "	[+] with a DB instance"
 echo ""
 
 
@@ -113,17 +113,17 @@ localhost=${localhost% *}
 
 ## Loop through all composer files that match
 for f in *-compose.yml; do
-	## Get line number of volume info
+	## Get line number of project info
 	lineNum="$(grep -n "volumes" "$f" | head -n 1 | cut -d: -f1)"
 	((lineNum++))
 
-	## Define the Volume name (Container)
-	volume=$(sed "${lineNum}q;d" "$f")
-	volume=${volume#*- }
-	volume=${volume%:/*}
+	## Define the project name
+	project=$(sed "${lineNum}q;d" "$f")
+	project=${project#*- }
+	project=${project%:/*}
 
 	## Display Container working on
-	echo " ---> ${volume} conntainer <---"
+	echo " ---> ${project} project <---"
 
 	## Check that all variables in the yaml file have been set
 	if [[ $(grep -o "{*}" "$f" | wc -l) > 0 ]]
@@ -133,25 +133,23 @@ for f in *-compose.yml; do
 		continue
 	fi
 
-	## Create the subfolders for the Volume
-	mkdir -p $volume/logs
-	mkdir -p $volume/public
-	## Uncomment if you need to keep the DB after rebuilds
-	## BUT you will need to use the alternative dockercompose file in the apache folder
-	mkdir -p $volume/db
+	## Create the subfolders for the project
+	mkdir -p $project/logs
+	mkdir -p $project/public
+	mkdir -p $project/db
 
 	## Create the default index file
-	if [ ! -f ./$volume/public/index.php ];
+	if [ ! -f ./$project/public/index.php ];
 	then
-		cp ./apache/index.txt ./$volume/public/index.php
-		sed -i "s/{volume}/$volume/g" ./$volume/public/index.php
+		cp ./apache/index.txt ./$project/public/index.php
+		sed -i "s/{project}/$project/g" ./$project/public/index.php
 	fi
 
 	## Create specific Dockerfile
-	cp ./apache/dockerfile.txt ./apache/$volume-Dockerfile
-	sed -i "s/{volume}/$volume/g" ./apache/$volume-Dockerfile
-	sed -i "s/{region}/$region/g" ./apache/$volume-Dockerfile
-	sed -i "s/{city}/$city/g" ./apache/$volume-Dockerfile
+	cp ./apache/dockerfile.txt ./apache/$project-Dockerfile
+	sed -i "s/{project}/$project/g" ./apache/$project-Dockerfile
+	sed -i "s/{region}/$region/g" ./apache/$project-Dockerfile
+	sed -i "s/{city}/$city/g" ./apache/$project-Dockerfile
 
 	## Build docker containers
 	docker compose -f "$f" up -d > /dev/null
@@ -160,13 +158,13 @@ for f in *-compose.yml; do
 	echo ""
 
 	## Update hosts file if needed
-	if [[ $(grep -o "${volume}.localhost" /etc/hosts | wc -l) < 1 ]]
+	if [[ $(grep -o "${project}.localhost" /etc/hosts | wc -l) < 1 ]]
 	then
-		sudo -- sh -c -e "echo '${localhost} ${volume}.localhost' >> /etc/hosts";
+		sudo -- sh -c -e "echo '${localhost} ${project}.localhost' >> /etc/hosts";
 
-		if [ -n "$(grep "${volume}.localhost" /etc/hosts)" ]
+		if [ -n "$(grep "${project}.localhost" /etc/hosts)" ]
 		then
-			echo "HOSTS file was succesfully updated with ${volume}.localhost";
+			echo "HOSTS file was succesfully updated with ${project}.localhost";
 		else
 			echo "Failed to update HOSTS file, please update manually!";
 		fi

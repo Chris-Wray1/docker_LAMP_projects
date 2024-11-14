@@ -1,9 +1,9 @@
 <html>
 <head>
-	<title>{volume}</title>
+	<title>{project}</title>
 </head>
 <body>
-	<h1>{volume}</h1>
+	<h1>{project}</h1>
 	<div><?php phpinfo(); ?></div>
 </body>
 </html>

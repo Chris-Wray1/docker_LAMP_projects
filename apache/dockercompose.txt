@@ -1,27 +1,27 @@
-name: {volume}
+name: {project}
 services:
-  apache:
-    container_name: {volume}_Apache
+  {project}:
+    container_name: {project}
     stdin_open: true
     tty: true
     build:
       context: apache
-      dockerfile: ./{volume}-Dockerfile
+      dockerfile: ./{project}-Dockerfile
     ports:
       - "{webport}:80"
     extra_hosts:
-      - "{volume}.localhost:127.0.0.1"
-    hostname: {volume}.localhost
+      - "{project}.localhost:127.0.0.1"
+    hostname: {project}.localhost
     volumes: 
-      - {volume}:/var/www/html
-      - {volume}_db:/var/run/mysqld
-      - {volume}_db:/var/lib/mysql
+      - {project}:/var/www/html
+      - {project}_db:/var/run/mysqld
+      - {project}_db:/var/lib/mysql
     depends_on:
       - mysql
     networks:
-      - {volume}_network
+      - {project}_network
   mysql:
-    container_name: {volume}_db
+    container_name: {project}_db
     image: mysql:8.1.0
     ports:
       - "{sqlport}:3306"
@@ -29,36 +29,36 @@ services:
       - MYSQL_ROOT_PASSWORD={DBrootPWD}
       - MYSQL_USER={DBuser}
       - MYSQL_PASSWORD={DBuserPWD}
-      - MYSQL_DATABASE={volume}
+      - MYSQL_DATABASE={project}
     volumes: 
-      - {volume}_db:/var/run/mysqld
-      - {volume}_db:/var/lib/mysql
+      - {project}_db:/var/run/mysqld
+      - {project}_db:/var/lib/mysql
     networks:
-      {volume}_network:
+      {project}_network:
         aliases:
           - database
 volumes:
-  {volume}:
-    name: "{volume}"
+  {project}:
+    name: "{project}"
     driver: local
     driver_opts: 
       type: none
-      device: ./{volume}/
+      device: ./{project}/
       o: bind
     external: false
     labels:
-      description: "Apache Volume"
+      description: "Apache project"
       department: "IT/Ops"
-  {volume}_db:
-    name: "{volume}_db"
+  {project}_db:
+    name: "{project}_db"
     driver: local
     driver_opts: 
       type: none
-      device: ./{volume}/db/
+      device: ./{project}/db/
       o: bind
     external: false
     labels:
-      description: "Mysql Volume"
+      description: "Mysql project"
       department: "IT/Ops"
 networks:
-   {volume}_network:
+   {project}_network:
