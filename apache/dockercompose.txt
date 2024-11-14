@@ -1,10 +1,14 @@
 name: {volume}
 services:
   apache:
-    container_name: {volume}
+    container_name: {volume}_Apache
+    stdin_open: true
+    tty: true
     build:
       context: apache
       dockerfile: ./{volume}-Dockerfile
+    ports:
+      - "{webport}:80"
     extra_hosts:
       - "{volume}.localhost:127.0.0.1"
     hostname: {volume}.localhost
@@ -12,8 +16,6 @@ services:
       - {volume}:/var/www/html
       - {volume}_db:/var/run/mysqld
       - {volume}_db:/var/lib/mysql
-    ports:
-      - "{webport}:80"
     depends_on:
       - mysql
     networks:

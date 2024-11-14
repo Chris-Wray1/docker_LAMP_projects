@@ -36,6 +36,8 @@ volume=""
 section_regex="^[[:blank:]]*\[[[:blank:]]*([[:alpha:]_][[:alnum:]_-]*)[[:blank:]]*\][[:blank:]]*(#.*)?$"
 entry_regex_quotes="^[[:blank:]]*([[:alpha:]_][[:alnum:]_]*)[[:blank:]]*=[[:blank:]]*('[^']+'|\"[^\"]+\")[[:blank:]]*(#.*)*$"
 entry_regex_loose="^[[:blank:]]*([[:alpha:]_][[:alnum:]_]*)[[:blank:]]*=[[:blank:]]*([^#]*[^#[:blank:]])*"
+region="Europe"
+city="London"
 
 while read -r line
 do
@@ -69,6 +71,12 @@ do
 		value=${value%[\'\"]}
 		key=${BASH_REMATCH[1]}
 		sed -i "s/{${key}}/${value}/g" ./${volume}-compose.yml
+		if [[ $key == "region" ]] then 
+			region=${value}
+		fi
+		if [[ $key == "city" ]] then 
+			city=${value}
+		fi
 		continue
 	fi
 	## When value is not quoted
@@ -77,6 +85,12 @@ do
 		value=${BASH_REMATCH[2]}
 		key=${BASH_REMATCH[1]}
 		sed -i "s/{${key}}/${value}/g" ./${volume}-compose.yml
+		if [[ $key == "region" ]] then 
+			region=${value}
+		fi
+		if [[ $key == "city" ]] then 
+			city=${value}
+		fi
 		continue
 	fi
 done < "$filename"
@@ -130,16 +144,14 @@ for f in *-compose.yml; do
 	if [ ! -f ./$volume/public/index.php ];
 	then
 		cp ./apache/index.txt ./$volume/public/index.php
-		sed -i "s/xxxx/$volume/g" ./$volume/public/index.php
+		sed -i "s/{volume}/$volume/g" ./$volume/public/index.php
 	fi
 
 	## Create specific Dockerfile
 	cp ./apache/dockerfile.txt ./apache/$volume-Dockerfile
-	sed -i "s/xxxx/$volume/g" ./apache/$volume-Dockerfile
-
-	## Create virtual host file
-	cp ./apache/apache-conf.txt ./apache/$volume.conf
-	sed -i "s/xxxx/$volume/g" ./apache/$volume.conf
+	sed -i "s/{volume}/$volume/g" ./apache/$volume-Dockerfile
+	sed -i "s/{region}/$region/g" ./apache/$volume-Dockerfile
+	sed -i "s/{city}/$city/g" ./apache/$volume-Dockerfile
 
 	## Build docker containers
 	docker compose -f "$f" up -d > /dev/null
@@ -164,5 +176,4 @@ done
 
 ## Tidy up apache install process
 rm ./apache/*-Dockerfile
-rm ./apache/*.conf
 rm ./*-compose.yml

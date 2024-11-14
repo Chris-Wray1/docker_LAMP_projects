@@ -1,55 +1,68 @@
-FROM php:8-apache
+FROM ubuntu:latest
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Set Localisation
+ENV TZ={region}/{city}
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN echo 'path-exclude /usr/share/doc/*' >/etc/dpkg/dpkg.cfg.d/docker-minimal && \ 
-echo 'path-exclude /usr/share/man/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
-echo 'path-exclude /usr/share/groff/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
-echo 'path-exclude /usr/share/info/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
-echo 'path-exclude /usr/share/lintian/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
-echo 'path-exclude /usr/share/linda/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
-echo 'path-exclude /usr/share/locale/*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal && \
-echo 'path-include /usr/share/locale/en*' >>/etc/dpkg/dpkg.cfg.d/docker-minimal
+RUN mkdir -p /var/www/html/public 
+RUN mkdir -p /var/www/html/db 
+RUN mkdir -p /var/www/html/logs
 
-RUN apt update -y > /dev/null 2>&1 && \
-apt install -qq -y --reinstall libfreetype6-dev libjpeg62-turbo-dev libpng-dev libzip-dev libonig-dev libxml2-dev libcurl4-openssl-dev \
-openssl zip unzip git apache2-utils curl gawk vim wget locales apt-utils > /dev/null 2>&1
+# Initialise APT
+RUN apt -qq update -y
 
-RUN mkdir -p /root/Downloads
-RUN wget -c -O /root/Downloads/mysql-apt.deb https://dev.mysql.com/get/mysql-apt-config_0.8.33-1_all.deb
+# Install PHP
+RUN apt install -qq -y --reinstall php php-cli php-common php-dev php-mysql php-opcache php-zip php-gd php-mbstring php-curl php-xml
 
-RUN DEBIAN_FRONTEND=noninteractive apt install -qq -y --reinstall /root/Downloads/mysql-apt.deb > /dev/null 2>&1 && \
-apt update -y > /dev/null 2>&1
+# Install Apache
+RUN apt install -qq -y --reinstall apache2 apache2-utils libapache2-mod-php
 
-RUN apt install -qq -y --reinstall mysql-client > /dev/null 2>&1
+RUN apt install -qq -y --reinstall vim
 
-RUN mkdir -p /etc/mysql
-RUN echo "[client]" >> /etc/mysql/my.cnf.fallback
-RUN echo "socket=/var/www/html/db/mysqld.sock" >> /etc/mysql/my.cnf.fallback
-RUN echo "[mysqld]" >> /etc/mysql/my.cnf.fallback
-RUN echo "bind-address=0.0.0.0" >> /etc/mysql/my.cnf.fallback
+# Install MYSQL Client
+RUN apt install -qq -y --reinstall mysql-client
 
-RUN pecl install xdebug > /dev/null && \
-a2enmod rewrite > /dev/null && \
-a2enmod headers > /dev/null
-
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg > /dev/null
-RUN docker-php-ext-install opcache gd pdo_mysql zip mysqli intl > /dev/null
-RUN docker-php-ext-enable opcache xdebug > /dev/null
-
-COPY xxxx.conf /etc/apache2/sites-available/xxxx.conf
-
-RUN a2ensite xxxx > /dev/null && \
-a2dissite 000-default > /dev/null
-
-RUN mkdir -p /var/www/html/public && \
-mkdir -p /var/www/html/logs
-
+# Add Global ServerName to Apache
 RUN echo ""  >> /etc/apache2/apache2.conf && \
 echo "  ##  Added by DocekrFfile ##" >> /etc/apache2/apache2.conf && \
-echo "ServerName xxxx.localhost" >> /etc/apache2/apache2.conf
+echo "ServerName {volume}.localhost" >> /etc/apache2/apache2.conf
 
+# Add Virtual Host
+RUN mkdir -p /etc/apache2/sites-available
+RUN echo "<VirtualHost *:80>" > /etc/apache2/sites-available/{volume}.conf && \
+echo "" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "  ServerName {volume}.localhost" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "  ServerAdmin admin@{volume}.localhost" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "  DocumentRoot /var/www/html/public" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "  DirectoryIndex index.php index.cgi index.pl index.shtml index.jsp default.asp index.aspx index.html index.htm" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "  <Directory /var/www/html/public>" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "    Options -Indexes +FollowSymLinks" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "    AllowOverride All" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "    Require all granted" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "    RewriteEngine On" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "    Order allow,deny" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "    Allow from all" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "  </Directory>" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "  ErrorLog /var/www/html/logs/error.log" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "  CustomLog /var/www/html/logs/access.log combined" >> /etc/apache2/sites-available/{volume}.conf && \
+echo "</VirtualHost>" >> /etc/apache2/sites-available/{volume}.conf
+
+# Disable Default Virtual Host and enable custom host
+RUN a2ensite {volume} > /dev/null && \
+a2dissite 000-default > /dev/null
+
+# Enable rewrite and headers
+RUN a2enmod rewrite
+RUN a2enmod headers
+
+# Start Apache and make visable
 RUN service apache2 restart
+CMD ["apachectl", "-D", "FOREGROUND"]
 
 EXPOSE 80
 EXPOSE 443
+EXPOSE 3306
